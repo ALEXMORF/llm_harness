@@ -1,6 +1,8 @@
 import torch
 import math
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 class Encoding(torch.nn.Module):
     def __init__(self, input_size, embed_size, context_len):
         super().__init__()
@@ -10,7 +12,7 @@ class Encoding(torch.nn.Module):
     
     def forward(self, x):
         tok = self.token_embed(x) 
-        pos = self.position_embed(torch.arange(0, x.shape[1]))
+        pos = self.position_embed(torch.arange(0, x.shape[1]).to(device))
         return tok + pos
 
 class MaskedSelfAttention(torch.nn.Module):
@@ -26,7 +28,7 @@ class MaskedSelfAttention(torch.nn.Module):
         K = self.input2k(xs) # B, C, H
         V = self.input2v(xs) # B, C, V
         w = torch.bmm(Q, torch.transpose(K, -1, -2)) # B, C, C
-        mask = torch.tril(torch.ones(w.shape[1:])) # C, C
+        mask = torch.tril(torch.ones(w.shape[1:])).to(device) # C, C
         w = w.masked_fill(mask == 0, float('-inf'))
         w = torch.nn.functional.softmax(w / self.head_size_sqrt, dim=-1)
         return torch.bmm(w, V) # B, C, V

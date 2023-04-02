@@ -19,15 +19,15 @@ def get_batch(dataset, context_len, batch_size, forTransformer = False):
     xs = None
     ys = None
     if forTransformer:
-        xs = torch.zeros((batch_size, context_len), dtype=torch.long)
-        ys = torch.zeros((batch_size, context_len), dtype=torch.long)
+        xs = torch.zeros((batch_size, context_len), dtype=torch.long).to(device)
+        ys = torch.zeros((batch_size, context_len), dtype=torch.long).to(device)
         for i in range(batch_size):
             pos = start_positions[i]
             xs[i] = dataset[pos:pos+context_len]
             ys[i] = dataset[pos+1:pos+context_len+1]
     else:
-        xs = torch.zeros((batch_size, context_len), dtype=torch.long)
-        ys = torch.zeros((batch_size,), dtype=torch.long)
+        xs = torch.zeros((batch_size, context_len), dtype=torch.long).to(device)
+        ys = torch.zeros((batch_size,), dtype=torch.long).to(device)
         for batch_i in range(batch_size):
             start_pos = start_positions[batch_i]
             xs[batch_i] = dataset[start_pos:start_pos+context_len]
