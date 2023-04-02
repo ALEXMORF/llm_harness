@@ -33,24 +33,34 @@ class MaskedSelfAttention(torch.nn.Module):
         w = torch.nn.functional.softmax(w / self.head_size_sqrt, dim=-1)
         return torch.bmm(w, V) # B, C, V
 
-class Block(torch.nn.Module):
-    def __init__(self, input_size, head_size, value_size):
+class MultiHeadAttention(torch.nn.Module):
+    def __init__(self, input_size, head_size, head_count, value_size):
         super().__init__()
-        self.attention = MaskedSelfAttention(input_size, head_size, value_size)
+        self.heads = torch.nn.ModuleList([MaskedSelfAttention(input_size, head_size, value_size) for _ in range(head_count)])
+        self.combine = torch.nn.Linear(value_size * head_count, value_size)
+    
+    def forward(self, xs):
+        out = torch.concat([head(xs) for head in self.heads], dim=-1)
+        return self.combine(out)
+
+class Block(torch.nn.Module):
+    def __init__(self, input_size, head_size, head_count, value_size):
+        super().__init__()
+        self.attention = MultiHeadAttention(input_size, head_size, head_count, value_size)
         self.FC = torch.nn.Linear(value_size, input_size)
+        self.layerNorm = torch.nn.LayerNorm(input_size)
     def forward(self, xs):
         out = self.attention(xs)
-        out = self.FC(out) + xs
+        out = self.layerNorm(self.FC(out) + xs)
         return out
 
-def make_model(alphabet_size, context_len, embed_size, hidden_size, head_size=64, value_size=128):
+def make_model(alphabet_size, context_len, embed_size, hidden_size, head_size=64, value_size=128, block_count=1, head_count=1):
     model = torch.nn.Sequential(
         Encoding(alphabet_size, embed_size, context_len),
         #MaskedSelfAttention(embed_size, head_size, value_size),
-        Block(embed_size, head_size, value_size),
-        Block(embed_size, head_size, value_size),
-        Block(embed_size, head_size, value_size),
-        MaskedSelfAttention(embed_size, head_size, value_size),
+        *[Block(embed_size, head_size, head_count, value_size) for _ in range(block_count)],
+        #Block(embed_size, head_size, value_size),
+        #Block(embed_size, head_size, value_size),
         torch.nn.Linear(value_size, hidden_size), torch.nn.ReLU(),
         torch.nn.Linear(hidden_size, hidden_size), torch.nn.ReLU(),
         torch.nn.Linear(hidden_size, alphabet_size)

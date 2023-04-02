@@ -7,7 +7,7 @@ import mlp
 import wavenet
 import Transformer
 from dataset import get_shakespeare_text, tokenize
-from generator import generate_text
+from generator import generate_text, generate_text_transformer
 from torch.utils.tensorboard import SummaryWriter
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -44,8 +44,12 @@ def main():
     CONTEXT_LEN = 32
     learner_name = 'Transformer'
     optimizer_name = 'Adam'
-    train_max_iter = 20000
+    train_max_iter = 10000
     batch_size = 64
+    head_size = 64
+    head_count = 4
+    value_size = 64
+    block_count = 6
 
     torch.manual_seed(42)
 
@@ -61,7 +65,7 @@ def main():
         'Transformer': (Transformer.make_model, 0.01),
     }
     model_creator, lr = learners[learner_name]
-    model = model_creator(alphabet_size, CONTEXT_LEN, embed_size=64, hidden_size=256).to(device)
+    model = model_creator(alphabet_size, CONTEXT_LEN, embed_size=64, hidden_size=256, head_size=head_size, value_size=value_size, block_count=block_count, head_count=head_count).to(device)
 
     optimizers = {
         'Adam': torch.optim.Adam,
@@ -71,7 +75,7 @@ def main():
     optimizer = optimizers[optimizer_name](model.parameters())
 
     print(f'model parameter count = {get_model_param_count(model)}')
-    writer = SummaryWriter(f'runs/{learner_name}_{optimizer_name}')
+    writer = SummaryWriter(f'runs/{CONTEXT_LEN}_{learner_name}_{optimizer_name}_{head_size}_{value_size}_{block_count}_{head_count}_norm')
     #writer.add_graph(model, xs[:1])
 
     losses = []
@@ -119,7 +123,7 @@ def main():
         f.write(f'final loss = {losses[-1]}\n')
 
         prompt = ''
-        output = generate_text(model, char2index, index2char, CONTEXT_LEN, prompt)
+        output = generate_text_transformer(model, char2index, index2char, CONTEXT_LEN, prompt)
         f.write(f'prompt = "{prompt}"\n')
         f.write(f'output:\n')
         f.write(output)
