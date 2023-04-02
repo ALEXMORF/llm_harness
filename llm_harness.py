@@ -10,6 +10,9 @@ from dataset import get_shakespeare_text, tokenize
 from generator import generate_text
 from torch.utils.tensorboard import SummaryWriter
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+print(f'using device: {device}')
+
 def get_batch(dataset, context_len, batch_size, forTransformer = False):
     start_positions = torch.randint(0, dataset.shape[0]-context_len-1, (batch_size,))
 
@@ -41,14 +44,14 @@ def main():
     CONTEXT_LEN = 32
     learner_name = 'Transformer'
     optimizer_name = 'Adam'
-    train_max_iter = 10000
+    train_max_iter = 20000
     batch_size = 64
 
     torch.manual_seed(42)
 
     text = get_shakespeare_text()
     char2index, index2char = tokenize(text)
-    dataset = torch.tensor([char2index[c] for c in text])
+    dataset = torch.tensor([char2index[c] for c in text]).to(device)
 
     alphabet_size = len(char2index)
 
@@ -58,7 +61,7 @@ def main():
         'Transformer': (Transformer.make_model, 0.01),
     }
     model_creator, lr = learners[learner_name]
-    model = model_creator(alphabet_size, CONTEXT_LEN, embed_size=64, hidden_size=256)
+    model = model_creator(alphabet_size, CONTEXT_LEN, embed_size=64, hidden_size=256).to(device)
 
     optimizers = {
         'Adam': torch.optim.Adam,
