@@ -1,0 +1,3 @@
+- instead of building dataset, sample them JIT during training
+- pack xs and ys in a similar way how transformers would pack them
+- add transformer to the benchmark

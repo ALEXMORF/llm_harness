@@ -1,0 +1,14 @@
+model parameter count = 612546
+final loss = 1.5094553852081303
+prompt = ""
+output:
+D:
+Shy Anothed! Hear shipherfed seend go souse, with a silenity covil this;
+And with old side at daise, me now;
+I know her be the soe, sid risegating so thy bullty layt,
+As depr'd mind ench of it twinnal,
+Aut shall have book'd lreace to yield thou life,
+And thee petaction a wild.
+
+LICINIUS:
+I love h
