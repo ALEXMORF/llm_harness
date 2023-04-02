@@ -21,19 +21,3 @@ def tokenize(text):
         char2index[c] = i
         index2char[i] = c
     return char2index, index2char
-
-def build_dataset(text, context_len):
-    char2index, index2char = tokenize(text)
-
-    xs = []
-    ys = []
-    context = [char2index['<S>']] * context_len
-    for c in tqdm(text):
-        xs += [context]
-        idx = char2index[c]
-        ys += [idx]
-        context = context[1:] + [idx]
-        
-    xs = torch.tensor(xs)
-    ys = torch.tensor(ys)
-    return xs, ys, char2index, index2char
